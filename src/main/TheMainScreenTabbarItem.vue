@@ -108,11 +108,19 @@ function clickEvent(e) {
   onTabClose()
   return false
 }
-function forceUpdate() {
+async function forceUpdate() {
   dbStore.state["handlers.active"] = props.position
   const appStore = useAppStore()
   const title = useTitle()
   title.value = appStore.state["title"] + " | " + Utils.unescape(props.name)
+  // Klicks auf den Rand des Reiters (Padding) treffen den router-link nicht; ohne eigene
+  // Navigation wird der Reiter nur optisch aktiv und der alte Inhalt bleibt stehen.
+  // Das Schließen-x stoppt die Propagation selbst (sl-tab handleCloseClick).
+  try {
+    await router.push(props.to)
+  } catch (error) {
+    console.error(error)
+  }
 }
 </script>
 

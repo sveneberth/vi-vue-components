@@ -117,6 +117,14 @@ function search_input(event) {
 
   if (currentSearchType === "local") {
     handlerState.filter = event.target.value
+    const localHits = handlerState.renderedList ? handlerState.renderedList.filter((x) => x["_visible"]).length : 0
+    if (state.searchType === "auto" && localHits === 0 && event.target.value.length > 1) {
+      // lokal kein Treffer: der Eintrag kann ausserhalb der geladenen Liste liegen -> Datenbank fragen
+      currentSearchType = "database"
+    }
+  }
+
+  if (currentSearchType === "local") {
     state.loading = false
     setTimeout(() => searchinput.value.focus(), 500)
     try {

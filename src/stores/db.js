@@ -549,27 +549,33 @@ export const useDBStore = defineStore("db", () => {
 
     let idx = state["handlers.opened"].findIndex((e) => e["url"] === url)
     if (idx === -1) {
-      idx = state["handlers.opened"].findIndex((e) => e["id"] === parseInt(route.query?.["_"])) //use id fallback
+      // ids are numbers (addOpened) or strings (from the url)
+      idx = state["handlers.opened"].findIndex((e) => String(e["id"]) === String(route.query?.["_"])) //use id fallback
       if (idx === -1) return
+    }
+
+    const entry = state["handlers.opened"][idx]
+    // resolve the index after navigating: the tab may have moved or been removed meanwhile
+    const removeEntry = () => {
+      const currentIdx = state["handlers.opened"].indexOf(entry)
+      if (currentIdx === -1) return false
+      state["handlers.opened"].splice(currentIdx, 1)
+      viewStore.destroy(url)
+      return true
     }
 
     if (idx === 0) {
       return 0
     } else if (idx === state["handlers.active"]) {
       router.push(state["handlers.opened"][idx - 1]["to"]).then(() => {
-        state["handlers.opened"].splice(idx, 1)
-        viewStore.destroy(url)
-        state["handlers.active"] = idx - 1
+        if (removeEntry()) state["handlers.active"] = idx - 1
       })
     } else if (idx < state["handlers.active"]) {
       router.push(state["handlers.opened"][state["handlers.active"]]["to"]).then(() => {
-        state["handlers.opened"].splice(idx, 1)
-        viewStore.destroy(url)
-        state["handlers.active"] = state["handlers.active"] - 1 //update to new idx
+        if (removeEntry()) state["handlers.active"] = state["handlers.active"] - 1 //update to new idx
       })
     } else if (idx > state["handlers.active"]) {
-      state["handlers.opened"].splice(idx, 1)
-      viewStore.destroy(url)
+      removeEntry()
     }
 
     const conf = getConfByRoute(route)
